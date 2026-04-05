@@ -24,7 +24,7 @@
         minMessagesPerSnippet: 6,
         maxMessagesPerSnippet: 10,
         maxCandidateCharacters: 20,
-        requestTimeoutMs: 60000,
+        requestTimeoutMs: 120000,
         temperature: 1.05,
         analysisSystemPrompt: [
             '你是一位擅长写“故人来信”的创作者。',
