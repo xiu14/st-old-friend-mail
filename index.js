@@ -3,6 +3,7 @@
 
     const MODULE_NAME = 'st-daily-memory-letter';
     const SETTINGS_HTML_PATH = '/scripts/extensions/third-party/st-daily-memory-letter/settings.html';
+    const STAMP_IMAGE_PATH = '/scripts/extensions/third-party/st-daily-memory-letter/stamp.png';
     const RUNTIME_STORAGE_KEY = `${MODULE_NAME}:runtime`;
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const INVALID_INACTIVITY_DAYS = 20000;
@@ -1857,17 +1858,7 @@
                                 <div class="dml-envelope-stamp-block">
                                     <div class="dml-envelope-stamp-slot">STAMP AREA</div>
                                     <div class="dml-envelope-stamp">
-                                        <div class="dml-envelope-stamp-inner">
-                                            <div class="dml-envelope-stamp-title">SILLYTAVERN</div>
-                                            <div class="dml-envelope-stamp-mark">
-                                                <div class="dml-envelope-stamp-circuit"></div>
-                                                <div class="dml-envelope-stamp-star">ST</div>
-                                            </div>
-                                            <div class="dml-envelope-stamp-footer">
-                                                <span>POSTAGE 2024</span>
-                                                <span>100</span>
-                                            </div>
-                                        </div>
+                                        <img class="dml-envelope-stamp-image" src="${STAMP_IMAGE_PATH}" alt="SillyTavern stamp">
                                     </div>
                                     <div class="dml-envelope-cancel-mark" aria-hidden="true">
                                         <span class="dml-envelope-cancel-ring"></span>
