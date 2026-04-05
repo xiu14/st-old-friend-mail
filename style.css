@@ -157,9 +157,26 @@
         grid-template-columns: 1fr;
     }
 
+    #dml-settings .dml-toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
     #dml-settings .dml-primary-button,
     #dml-settings .dml-toolbar-button {
         width: 100%;
+        min-width: 0;
+    }
+
+    #dml-settings .dml-toolbar-button {
+        min-height: 42px;
+        padding: 0 10px;
+        font-size: 13px;
+        line-height: 1.2;
+        writing-mode: horizontal-tb;
+        white-space: normal;
+        word-break: keep-all;
     }
 }
 
@@ -491,28 +508,45 @@
     }
 
     .dml-envelope-cover {
-        min-height: 280px;
+        min-height: 300px;
+        padding: 12px;
     }
 
     .dml-cover-layout {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 14px;
+        padding: 14px;
     }
 
     .dml-cover-copy {
-        padding: 4px 0 12px;
+        padding: 0 4px 8px;
         align-items: center;
         text-align: center;
     }
 
+    .dml-cover-portrait-frame {
+        width: min(100%, 160px);
+    }
+
     .dml-envelope-title {
-        font-size: 24px;
+        font-size: 22px;
+        max-width: none;
+    }
+
+    .dml-envelope-subtitle {
         max-width: none;
     }
 
     .dml-cover-summary {
+        margin-top: 14px;
         font-size: 13px;
         line-height: 1.75;
+        max-width: none;
+    }
+
+    .dml-open-button {
+        align-self: center;
+        width: min(100%, 220px);
     }
 
     .dml-letter-paper {
