@@ -693,12 +693,25 @@
 
     function populateModelSuggestions(models) {
         const options = Array.from(new Set(models.filter(Boolean)));
-        const dataList = $('#dml-model-suggestions');
-        dataList.empty();
+        const select = $('#dml-model');
+        const currentValue = String(select.val() || '').trim();
+        select.empty();
 
         for (const model of options) {
-            dataList.append(`<option value="${escapeHtml(model)}"></option>`);
+            select.append(`<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`);
         }
+
+        if (!options.length) {
+            select.append('<option value="">请先获取模型</option>');
+            return;
+        }
+
+        if (currentValue && options.includes(currentValue)) {
+            select.val(currentValue);
+            return;
+        }
+
+        select.val(options[0]);
     }
 
     function buildLetterRecord(candidate, fragments, content, source) {
@@ -867,14 +880,6 @@
             }
         });
 
-        $('#dml-clear-api-key').on('click', () => {
-            const settings = saveSettings({ apiKey: '' });
-            syncPayload();
-            hydrateForm(settings);
-            renderState();
-            toastr.success('已清空本地保存的 API Key');
-        });
-
         $('#dml-fetch-models').on('click', async () => {
             const button = $('#dml-fetch-models');
             const previousText = button.text();
@@ -887,11 +892,6 @@
                 };
                 const models = await fetchAvailableModels(draftSettings);
                 populateModelSuggestions(models);
-
-                if (!String($('#dml-model').val() || '').trim()) {
-                    $('#dml-model').val(models[0]);
-                }
-
                 toastr.success(`已获取 ${models.length} 个模型`);
             } catch (error) {
                 toastr.error(error instanceof Error ? error.message : String(error), '获取模型失败');
@@ -929,8 +929,8 @@
         $('#dml-auto-run').prop('checked', Boolean(settings.autoRunOnStartup));
         $('#dml-api-url').val(settings.apiUrl || '');
         $('#dml-api-key').val(settings.apiKey || '');
-        $('#dml-model').val(settings.model || '');
-        populateModelSuggestions(settings.model ? [settings.model] : []);
+        populateModelSuggestions(settings.model ? [settings.model] : [DEFAULT_SETTINGS.model]);
+        $('#dml-model').val(settings.model || DEFAULT_SETTINGS.model);
         $('#dml-inactive-days').val(settings.inactiveDays ?? DEFAULT_SETTINGS.inactiveDays);
         $('#dml-snippets-per-letter').val(settings.snippetsPerLetter ?? DEFAULT_SETTINGS.snippetsPerLetter);
         $('#dml-cooldown-days').val(settings.cooldownDays ?? DEFAULT_SETTINGS.cooldownDays);
