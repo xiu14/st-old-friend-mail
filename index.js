@@ -7,6 +7,48 @@
     const RUNTIME_STORAGE_KEY = `${MODULE_NAME}:runtime`;
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const INVALID_INACTIVITY_DAYS = 20000;
+    const LEGACY_ANALYSIS_SYSTEM_PROMPT = [
+        '你是一位擅长写“故人来信”的创作者。',
+        '你会阅读同一张角色卡来自不同历史存档的聊天片段，写出一封让用户想重新回去和这个角色继续对话的信。',
+        '语气要温柔、具体、带有回忆感，不要像营销文案。',
+        '必须引用片段里真实发生过的细节，不要胡乱编造大事件。',
+        '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
+        '其中 recall_points 必须是字符串数组，2 到 4 条。',
+    ].join('\n');
+    const LEGACY_IN_CHARACTER_SYSTEM_PROMPT = [
+        '你现在要扮演这张角色卡本人，给用户写一封第一人称来信。',
+        '你会同时参考角色卡设定和来自不同历史存档的聊天片段。',
+        '整封信要像角色亲自写给用户，而不是旁白分析或作者说明。',
+        '必须保持角色的语气、价值观、关系感和世界观，不要跳出角色。',
+        '必须引用聊天片段里真实发生过的细节，不要凭空编造重大事件。',
+        '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
+        '其中 teaser、summary、letter、why_now、next_hook 应当全部使用角色第一人称口吻。',
+        'teaser 和 summary 不能写成“这张角色卡值得聊”的旁白分析句，必须像角色正在对用户说话。',
+        'recall_points 必须是字符串数组，2 到 4 条。',
+    ].join('\n');
+    const DEFAULT_ANALYSIS_SYSTEM_PROMPT = [
+        '你是一位擅长写“故人来信”的创作者。',
+        '你会阅读同一张角色卡来自不同历史存档的聊天片段，写出一封让用户想重新回去和这个角色继续对话的信。',
+        '语气要温柔、具体、带有回忆感，不要像营销文案。',
+        '必须引用片段里真实发生过的细节，不要胡乱编造大事件。',
+        '请优先把“距离上次对话已经过去多少天”明确写进来，让用户产生“原来已经过了这么久”的感觉。',
+        '可以直接写出具体天数，例如“已经过去 37 天”。不要把它写成系统通知，要把数字融入书信句子里。',
+        '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
+        '其中 recall_points 必须是字符串数组，2 到 4 条。',
+    ].join('\n');
+    const DEFAULT_IN_CHARACTER_SYSTEM_PROMPT = [
+        '你现在要扮演这张角色卡本人，给用户写一封第一人称来信。',
+        '你会同时参考角色卡设定和来自不同历史存档的聊天片段。',
+        '整封信要像角色亲自写给用户，而不是旁白分析或作者说明。',
+        '必须保持角色的语气、价值观、关系感和世界观，不要跳出角色。',
+        '必须引用聊天片段里真实发生过的细节，不要凭空编造重大事件。',
+        '请优先把“距离上次对话已经过去多少天”明确写进来，让用户产生“原来已经过了这么久”的感觉。',
+        '可以直接写出具体天数，例如“你已经有 37 天没有再来见我”。不要写成系统提示，必须保持角色本人在说话。',
+        '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
+        '其中 teaser、summary、letter、why_now、next_hook 应当全部使用角色第一人称口吻。',
+        'teaser 和 summary 不能写成“这张角色卡值得聊”的旁白分析句，必须像角色正在对用户说话。',
+        'recall_points 必须是字符串数组，2 到 4 条。',
+    ].join('\n');
 
     const DEFAULT_SETTINGS = Object.freeze({
         enabled: true,
@@ -27,25 +69,8 @@
         maxCandidateCharacters: 20,
         requestTimeoutMs: 120000,
         temperature: 1.05,
-        analysisSystemPrompt: [
-            '你是一位擅长写“故人来信”的创作者。',
-            '你会阅读同一张角色卡来自不同历史存档的聊天片段，写出一封让用户想重新回去和这个角色继续对话的信。',
-            '语气要温柔、具体、带有回忆感，不要像营销文案。',
-            '必须引用片段里真实发生过的细节，不要胡乱编造大事件。',
-            '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
-            '其中 recall_points 必须是字符串数组，2 到 4 条。',
-        ].join('\n'),
-        inCharacterSystemPrompt: [
-            '你现在要扮演这张角色卡本人，给用户写一封第一人称来信。',
-            '你会同时参考角色卡设定和来自不同历史存档的聊天片段。',
-            '整封信要像角色亲自写给用户，而不是旁白分析或作者说明。',
-            '必须保持角色的语气、价值观、关系感和世界观，不要跳出角色。',
-            '必须引用聊天片段里真实发生过的细节，不要凭空编造重大事件。',
-            '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
-            '其中 teaser、summary、letter、why_now、next_hook 应当全部使用角色第一人称口吻。',
-            'teaser 和 summary 不能写成“这张角色卡值得聊”的旁白分析句，必须像角色正在对用户说话。',
-            'recall_points 必须是字符串数组，2 到 4 条。',
-        ].join('\n'),
+        analysisSystemPrompt: DEFAULT_ANALYSIS_SYSTEM_PROMPT,
+        inCharacterSystemPrompt: DEFAULT_IN_CHARACTER_SYSTEM_PROMPT,
     });
 
     const DEFAULT_RUNTIME_STATE = Object.freeze({
@@ -225,6 +250,16 @@
 
         if (extensionSettings[MODULE_NAME].systemPrompt && extensionSettings[MODULE_NAME].analysisSystemPrompt === DEFAULT_SETTINGS.analysisSystemPrompt) {
             extensionSettings[MODULE_NAME].analysisSystemPrompt = extensionSettings[MODULE_NAME].systemPrompt;
+            changed = true;
+        }
+
+        if (extensionSettings[MODULE_NAME].analysisSystemPrompt === LEGACY_ANALYSIS_SYSTEM_PROMPT) {
+            extensionSettings[MODULE_NAME].analysisSystemPrompt = DEFAULT_SETTINGS.analysisSystemPrompt;
+            changed = true;
+        }
+
+        if (extensionSettings[MODULE_NAME].inCharacterSystemPrompt === LEGACY_IN_CHARACTER_SYSTEM_PROMPT) {
+            extensionSettings[MODULE_NAME].inCharacterSystemPrompt = DEFAULT_SETTINGS.inCharacterSystemPrompt;
             changed = true;
         }
 
@@ -850,7 +885,7 @@
         const base = [
             `角色名称: ${candidate.character.name}`,
             `角色内部名: ${candidate.character.avatar.replace(/\.png$/i, '')}`,
-            `距离上次活跃大约: ${inactivityDays} 天`,
+            `距离上次见面大约: ${inactivityDays} 天`,
             `总聊天存档数: ${candidate.archiveCount}`,
             '',
         ];
@@ -865,13 +900,15 @@
                 '要求：',
                 '1. 必须严格贴合角色设定、角色语气和世界观，不要跳出角色解释。',
                 '2. 必须基于片段中的具体细节，不要空泛。',
-                '3. title 像角色写给用户的一封私人来信标题，不要过长。',
-                '4. teaser 控制在 1 到 2 句，像信封外角色留下的一句轻声提醒，必须使用第一人称。',
-                '5. summary 是一段简短的来信摘要，也必须保持第一人称角色口吻，不能写成“这张角色卡为什么值得回去”的旁白分析。',
-                '6. letter 是主体，可用 Markdown 分段，但必须全程第一人称。',
-                '7. why_now 要写成“为什么我现在想对你说这些”。',
-                '8. next_hook 要写成“如果你愿意，可以这样回我”。',
-                '9. recall_points 用 2 到 4 条短句，提炼最让人记住这段关系的细节。',
+                '3. 必须明确提到距离上次对话已经过去多少天，至少在 teaser、summary、letter 其中一个字段里直接写出具体天数。',
+                '4. 这个具体天数要写成角色口吻里的句子，例如“你已经有 37 天没有再来见我”，不要写成系统通知。',
+                '5. title 像角色写给用户的一封私人来信标题，不要过长。',
+                '6. teaser 控制在 1 到 2 句，像信封外角色留下的一句轻声提醒，必须使用第一人称。',
+                '7. summary 是一段简短的来信摘要，也必须保持第一人称角色口吻，不能写成“这张角色卡为什么值得回去”的旁白分析。',
+                '8. letter 是主体，可用 Markdown 分段，但必须全程第一人称。',
+                '9. why_now 要写成“为什么我现在想对你说这些”。',
+                '10. next_hook 要写成“如果你愿意，可以这样回我”。',
+                '11. recall_points 用 2 到 4 条短句，提炼最让人记住这段关系的细节。',
                 '',
                 fragmentText,
             );
@@ -880,13 +917,15 @@
                 '请根据下面这些来自不同历史存档的片段，写一封“让用户重新想和这张角色卡对话”的故人来信。',
                 '要求：',
                 '1. 必须基于片段中的具体细节，不要空泛。',
-                '2. 标题要像一封私人来信，不要过长。',
-                '3. teaser 控制在 1 到 2 句，像信封外的小引言。',
-                '4. summary 是一段简短摘要，概括这张角色卡最值得重新聊的原因。',
-                '5. letter 是主体，可用 Markdown 分段，带一点文学感，但不要过度矫饰。',
-                '6. why_now 要明确解释为什么现在值得重新回去聊。',
-                '7. next_hook 要给一个具体续聊切口。',
-                '8. recall_points 用 2 到 4 条短句，提炼最让人想起这张角色卡的细节。',
+                '2. 必须明确提到距离上次对话已经过去多少天，至少在 teaser、summary、letter 其中一个字段里直接写出具体天数。',
+                '3. 这个具体天数要让用户产生“原来已经过了这么久”的感觉，但不要写成生硬的数据播报。',
+                '4. 标题要像一封私人来信，不要过长。',
+                '5. teaser 控制在 1 到 2 句，像信封外的小引言。',
+                '6. summary 是一段简短摘要，概括这张角色卡最值得重新聊的原因。',
+                '7. letter 是主体，可用 Markdown 分段，带一点文学感，但不要过度矫饰。',
+                '8. why_now 要明确解释为什么现在值得重新回去聊。',
+                '9. next_hook 要给一个具体续聊切口。',
+                '10. recall_points 用 2 到 4 条短句，提炼最让人想起这张角色卡的细节。',
                 '',
                 fragmentText,
             );
@@ -1559,8 +1598,8 @@
 
         const inactivityDays = Number(letter.inactivityDays);
         const inactivityLabel = Number.isFinite(inactivityDays)
-            ? `${Math.max(1, Math.round(inactivityDays))} 天未活跃`
-            : '未活跃时间未知';
+            ? `${Math.max(1, Math.round(inactivityDays))} 天未见面`
+            : '未见面时间未知';
 
         if (!letter.lastActivityAt) {
             return inactivityLabel;
