@@ -1431,6 +1431,7 @@
 
         const html = `
             <div id="${popupId}" class="dml-letter-popup" tabindex="-1" autofocus>
+                <button class="menu_button dml-popup-close" data-result="null" type="button" aria-label="关闭来信">×</button>
                 <div class="dml-letter-main">
                     <div class="dml-envelope-shell">
                         <div class="dml-envelope-cover">
