@@ -1460,18 +1460,20 @@
                                     <div class="dml-paper-meta-line">${escapeHtml(name)} · ${escapeHtml(formatLastActivityMeta(letter))}</div>
                                 </div>
                             </div>
-                            <div class="dml-paper-summary">${summary || teaser}</div>
-                            <div class="dml-paper-body">${bodyHtml}</div>
+                            <div class="dml-paper-scroll">
+                                <div class="dml-paper-summary">${summary || teaser}</div>
+                                <div class="dml-paper-body">${bodyHtml}</div>
 
-                            <details class="dml-paper-fragments">
-                                <summary class="dml-paper-fragments-summary">本次故人来信参考了这些旧存档片段</summary>
-                                <div class="dml-paper-fragments-body">
-                                    ${fragmentsHtml || '<div class="dml-empty">没有可展示的片段预览。</div>'}
+                                <details class="dml-paper-fragments">
+                                    <summary class="dml-paper-fragments-summary">本次故人来信参考了这些旧存档片段</summary>
+                                    <div class="dml-paper-fragments-body">
+                                        ${fragmentsHtml || '<div class="dml-empty">没有可展示的片段预览。</div>'}
+                                    </div>
+                                </details>
+
+                                <div class="dml-paper-actions">
+                                    <button class="menu_button dml-paper-action-button" data-dml-action="open-chat" data-dml-avatar="${escapeHtml(letter.character?.avatar || '')}" data-dml-chat-file="${escapeHtml(letter.openChatFile || '')}" type="button">重新打开这段聊天</button>
                                 </div>
-                            </details>
-
-                            <div class="dml-paper-actions">
-                                <button class="menu_button dml-paper-action-button" data-dml-action="open-chat" data-dml-avatar="${escapeHtml(letter.character?.avatar || '')}" data-dml-chat-file="${escapeHtml(letter.openChatFile || '')}" type="button">重新打开这段聊天</button>
                             </div>
                         </div>
                     </div>
