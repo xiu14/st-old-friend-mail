@@ -1817,8 +1817,6 @@
                     <div class="dml-envelope-shell">
                         <div class="dml-envelope-cover">
                             <div class="dml-cover-layout">
-                                <div class="dml-envelope-airmail-band dml-envelope-airmail-band--top" aria-hidden="true"></div>
-                                <div class="dml-envelope-airmail-band dml-envelope-airmail-band--bottom" aria-hidden="true"></div>
                                 <div class="dml-envelope-postcode">
                                     <div class="dml-postcode-label">投递日期</div>
                                     <div class="dml-postcode-boxes">${dateBoxes}</div>
@@ -1826,11 +1824,21 @@
                                 <div class="dml-envelope-stamp-block">
                                     <div class="dml-envelope-stamp-slot">贴邮票处</div>
                                     <div class="dml-envelope-stamp">
-                                        <div class="dml-envelope-stamp-title">中国邮政</div>
-                                        <div class="dml-envelope-stamp-mark">
-                                            <div class="dml-envelope-stamp-star">★</div>
+                                        <div class="dml-envelope-stamp-inner">
+                                            <div class="dml-envelope-stamp-title">SILLYTAVERN</div>
+                                            <div class="dml-envelope-stamp-mark">
+                                                <div class="dml-envelope-stamp-circuit"></div>
+                                                <div class="dml-envelope-stamp-star">ST</div>
+                                            </div>
+                                            <div class="dml-envelope-stamp-footer">
+                                                <span>ST MAIL</span>
+                                                <span>中国邮政</span>
+                                            </div>
                                         </div>
-                                        <div class="dml-envelope-stamp-value">80分</div>
+                                    </div>
+                                    <div class="dml-envelope-cancel-mark" aria-hidden="true">
+                                        <span class="dml-envelope-cancel-ring"></span>
+                                        <span class="dml-envelope-cancel-text">${dateCode}</span>
                                     </div>
                                 </div>
                                 <div class="dml-cover-portrait-wrap">
