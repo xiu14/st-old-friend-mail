@@ -1728,32 +1728,64 @@
         };
     }
 
-    function applyPreferredAvatarSources(root) {
-        if (!(root instanceof HTMLElement)) {
-            return;
+    function preloadImageSource(source, timeoutMs = 1200) {
+        return new Promise((resolve, reject) => {
+            const url = String(source || '').trim();
+            if (!url) {
+                reject(new Error('empty source'));
+                return;
+            }
+
+            const image = new Image();
+            let settled = false;
+            const cleanup = () => {
+                image.onload = null;
+                image.onerror = null;
+                clearTimeout(timer);
+            };
+            const finish = (callback, value) => {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
+                cleanup();
+                callback(value);
+            };
+            const timer = window.setTimeout(() => finish(reject, new Error('image preload timeout')), timeoutMs);
+
+            image.onload = () => finish(resolve, url);
+            image.onerror = () => finish(reject, new Error(`image preload failed: ${url}`));
+            image.decoding = 'async';
+            image.src = url;
+
+            if (image.complete && image.naturalWidth > 0) {
+                finish(resolve, url);
+            }
+        });
+    }
+
+    async function resolvePopupAvatarSource(avatarSources) {
+        const preferred = String(avatarSources?.preferred || '').trim();
+        const fallback = String(avatarSources?.fallback || '').trim();
+
+        if (preferred) {
+            try {
+                return await preloadImageSource(preferred, 1500);
+            } catch {
+                // Fall through to thumbnail fallback.
+            }
         }
 
-        root.querySelectorAll('img[data-primary-src]').forEach(image => {
-            if (!(image instanceof HTMLImageElement)) {
-                return;
+        if (fallback) {
+            try {
+                return await preloadImageSource(fallback, 900);
+            } catch {
+                // Fall through to best-effort return below.
             }
+        }
 
-            const primarySrc = image.dataset.primarySrc || '';
-            const fallbackSrc = image.dataset.fallbackSrc || '';
-
-            if (!primarySrc) {
-                return;
-            }
-
-            image.onerror = () => {
-                if (fallbackSrc && image.src !== fallbackSrc) {
-                    image.onerror = null;
-                    image.src = fallbackSrc;
-                }
-            };
-
-            image.src = primarySrc;
-        });
+        return preferred || fallback || '';
     }
 
     function openApiFailureCard({ title = '小信封投递失败', message = '这次故人来信没有成功寄出。', detail = '', hint = '' } = {}) {
@@ -1789,7 +1821,7 @@
         });
     }
 
-    function openLetterPopup(letter) {
+    async function openLetterPopup(letter) {
         const context = getContext();
         const popupId = `dml-popup-${Date.now()}`;
         const title = escapeHtml(letter.title || '今日故人来信');
@@ -1800,6 +1832,7 @@
         const dateCode = formatEnvelopeDateCode(letter.createdAt || letter.lastActivityAt || Date.now());
         const dateBoxes = dateCode.split('').map(digit => `<span class="dml-postcode-digit">${digit}</span>`).join('');
         const avatarSources = getAvatarImageSources(context, letter?.character?.avatar);
+        const popupAvatarSrc = escapeHtml(await resolvePopupAvatarSource(avatarSources));
         const bodyHtml = renderLetterBody(letter);
         const fragments = Array.isArray(letter.fragments) ? letter.fragments : [];
 
@@ -1843,8 +1876,8 @@
                                 </div>
                                 <div class="dml-cover-portrait-wrap">
                                     <div class="dml-cover-portrait-frame">
-                                        ${avatarSources.preferred
-                                            ? `<img class="dml-cover-portrait-image" data-primary-src="${escapeHtml(avatarSources.preferred)}" data-fallback-src="${escapeHtml(avatarSources.fallback)}" alt="${name}">`
+                                        ${popupAvatarSrc
+                                            ? `<img class="dml-cover-portrait-image" src="${popupAvatarSrc}" alt="${name}">`
                                             : '<div class="dml-cover-portrait-image"></div>'}
                                     </div>
                                 </div>
@@ -1861,8 +1894,8 @@
 
                         <div class="dml-letter-paper">
                             <div class="dml-paper-header">
-                                ${avatarSources.preferred
-                                    ? `<img class="dml-paper-avatar" data-primary-src="${escapeHtml(avatarSources.preferred)}" data-fallback-src="${escapeHtml(avatarSources.fallback)}" alt="${name}">`
+                                ${popupAvatarSrc
+                                    ? `<img class="dml-paper-avatar" src="${popupAvatarSrc}" alt="${name}">`
                                     : '<div class="dml-paper-avatar"></div>'}
                                 <div class="dml-paper-header-meta">
                                     <div class="dml-paper-kicker">来自旧日存档的回声</div>
@@ -1900,7 +1933,6 @@
             allowVerticalScrolling: true,
             onOpen: (popup) => {
                 popup.dlg.classList.add('dml-host-popup');
-                applyPreferredAvatarSources(document.getElementById(popupId));
             },
         });
     }
