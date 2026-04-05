@@ -217,7 +217,7 @@
 
 .dml-letter-popup {
     position: relative;
-    max-width: 980px;
+    max-width: 1020px;
     margin: 0 auto;
     min-height: 0;
     color: #f4e8da;
@@ -254,7 +254,7 @@
     border: none;
     box-shadow: none;
     padding: 0;
-    width: min(980px, calc(100dvw - 24px));
+    width: min(1020px, calc(100dvw - 24px));
     max-width: calc(100dvw - 16px);
 }
 
@@ -347,8 +347,8 @@
 
 .dml-envelope-shell {
     position: relative;
-    height: 360px;
-    min-height: 360px;
+    height: 380px;
+    min-height: 380px;
     border-radius: 24px;
     overflow: hidden;
     background:
@@ -396,7 +396,7 @@
     height: 100%;
     flex: 1 1 auto;
     gap: 28px;
-    padding: 74px 26px 28px;
+    padding: 74px 26px 38px;
     border-radius: 16px;
     border: 1px solid rgba(129, 92, 55, 0.12);
     background:
@@ -711,14 +711,20 @@
 }
 
 .dml-open-button {
-    margin-top: 28px;
+    margin-top: 24px;
     width: 180px;
     min-width: 180px;
-    min-height: 46px;
+    height: 48px;
+    min-height: 48px;
+    padding: 0 18px;
+    display: inline-flex !important;
     align-self: flex-start;
     flex: 0 0 auto;
     white-space: nowrap;
-    justify-content: center;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    line-height: 1;
     border-radius: 0;
     color: #f8efe3;
     background: rgba(160, 117, 70, 0.08);
