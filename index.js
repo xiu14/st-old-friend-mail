@@ -1822,7 +1822,7 @@
                                     <div class="dml-postcode-boxes">${dateBoxes}</div>
                                 </div>
                                 <div class="dml-envelope-stamp-block">
-                                    <div class="dml-envelope-stamp-slot">贴邮票处</div>
+                                    <div class="dml-envelope-stamp-slot">STAMP AREA</div>
                                     <div class="dml-envelope-stamp">
                                         <div class="dml-envelope-stamp-inner">
                                             <div class="dml-envelope-stamp-title">SILLYTAVERN</div>
@@ -1831,8 +1831,8 @@
                                                 <div class="dml-envelope-stamp-star">ST</div>
                                             </div>
                                             <div class="dml-envelope-stamp-footer">
-                                                <span>ST MAIL</span>
-                                                <span>中国邮政</span>
+                                                <span>POSTAGE 2024</span>
+                                                <span>100</span>
                                             </div>
                                         </div>
                                     </div>
