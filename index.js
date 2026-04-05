@@ -590,14 +590,8 @@
         };
     }
 
-    async function rebuildCandidateForAvatar(letter) {
-        const avatar = String(letter?.character?.avatar || '').trim();
-        if (!avatar) {
-            return null;
-        }
-
-        const character = (getContext().characters || []).find(item => item?.avatar === avatar);
-        if (!character?.name) {
+    async function rebuildCandidateForCharacter(character) {
+        if (!character?.avatar || !character?.name) {
             return null;
         }
 
@@ -616,6 +610,44 @@
             inactiveMs: Math.max(0, Date.now() - lastActivity),
             eligible: true,
         };
+    }
+
+    async function rebuildCandidateForAvatar(letter) {
+        const avatar = String(letter?.character?.avatar || '').trim();
+        if (!avatar) {
+            return null;
+        }
+
+        const character = (getContext().characters || []).find(item => item?.avatar === avatar);
+        return rebuildCandidateForCharacter(character);
+    }
+
+    function findCharacterForDebug(query) {
+        const normalizedQuery = String(query || '').trim().toLowerCase();
+        if (!normalizedQuery) {
+            return null;
+        }
+
+        const characters = getContext().characters || [];
+        const exactMatch = characters.find(item => {
+            const internalName = String(item?.avatar || '').replace(/\.png$/i, '').toLowerCase();
+            const avatar = String(item?.avatar || '').toLowerCase();
+            const displayName = String(item?.name || '').toLowerCase();
+            return [displayName, internalName, avatar].includes(normalizedQuery);
+        });
+
+        if (exactMatch) {
+            return exactMatch;
+        }
+
+        return characters.find(item => {
+            const internalName = String(item?.avatar || '').replace(/\.png$/i, '').toLowerCase();
+            const avatar = String(item?.avatar || '').toLowerCase();
+            const displayName = String(item?.name || '').toLowerCase();
+            return displayName.includes(normalizedQuery)
+                || internalName.includes(normalizedQuery)
+                || avatar.includes(normalizedQuery);
+        }) || null;
     }
 
     function getCharacterCardContext(candidate) {
@@ -1170,6 +1202,7 @@
     async function init() {
         try {
             syncPayload();
+            exposeDebugCommands();
             await mountSettings();
             bindPopupActions();
             renderState();
@@ -1514,6 +1547,39 @@
         return String(letter.summary || letter.teaser || '这张角色卡还有一些没说完的话，正等着你把故事接起来。').trim();
     }
 
+    function openApiFailureCard({ title = '小信封投递失败', message = '这次故人来信没有成功寄出。', detail = '', hint = '' } = {}) {
+        const context = getContext();
+        const popupId = `dml-failure-${Date.now()}`;
+        const safeTitle = escapeHtml(title);
+        const safeMessage = escapeHtml(message);
+        const safeDetail = escapeHtml(detail);
+        const safeHint = escapeHtml(hint || '你可以检查 API 地址、模型、Key，或者稍后再试一次。');
+
+        const html = `
+            <div id="${popupId}" class="dml-debug-popup dml-failure-popup" tabindex="-1" autofocus>
+                <button class="menu_button dml-popup-close" data-result="null" type="button" aria-label="关闭提示">×</button>
+                <div class="dml-failure-card">
+                    <div class="dml-failure-badge"><i class="fa-solid fa-triangle-exclamation"></i><span>投递失败</span></div>
+                    <div class="dml-failure-title">${safeTitle}</div>
+                    <div class="dml-failure-message">${safeMessage}</div>
+                    ${safeDetail ? `<div class="dml-failure-detail">${safeDetail}</div>` : ''}
+                    <div class="dml-failure-hint">${safeHint}</div>
+                </div>
+            </div>
+        `;
+
+        context.callGenericPopup(html, context.POPUP_TYPE.TEXT, '', {
+            wide: false,
+            large: false,
+            okButton: false,
+            cancelButton: false,
+            allowVerticalScrolling: true,
+            onOpen: (popup) => {
+                popup.dlg.classList.add('dml-host-popup', 'dml-host-popup--compact');
+            },
+        });
+    }
+
     function openLetterPopup(letter) {
         const context = getContext();
         const popupId = `dml-popup-${Date.now()}`;
@@ -1596,6 +1662,103 @@
                 popup.dlg.classList.add('dml-host-popup');
             },
         });
+    }
+
+    async function debugGenerateForCharacter(query) {
+        const settings = getSettings();
+        const localMode = shouldUseLocalGeneration(settings);
+        const apiReady = canGenerateWithApi(settings);
+
+        if (!settings.enabled) {
+            throw new Error('故人来信当前未启用。请先勾选“启用故人来信”并保存。');
+        }
+
+        if (!localMode && !apiReady) {
+            throw new Error('未配置外部 AI URL。请填写 API，或切换到本地生成模式。');
+        }
+
+        if (generationPromise) {
+            throw new Error('当前已经有一封故人来信正在生成，请稍后再试。');
+        }
+
+        const character = findCharacterForDebug(query);
+        if (!character) {
+            throw new Error(`找不到角色卡：${query}`);
+        }
+
+        patchRuntimeState({
+            lastAttemptAt: nowIso(),
+            lastError: null,
+            lastSource: 'debug-targeted',
+        });
+
+        generationPromise = (async () => {
+            try {
+                const candidate = await rebuildCandidateForCharacter(character);
+                if (!candidate) {
+                    throw new Error('当前角色没有可读取的聊天存档。');
+                }
+
+                const fragments = await collectCandidateFragments(candidate, settings);
+                if (!fragments.length) {
+                    throw new Error('按当前设置没有从这张角色卡里提取到可用片段。');
+                }
+
+                const content = localMode
+                    ? buildLocalLetter(candidate, fragments, settings)
+                    : await callExternalAi(settings, candidate, fragments);
+                const source = localMode ? 'local' : 'external-ai';
+                const letter = buildLetterRecord(candidate, fragments, content, source, settings);
+                const nextState = loadRuntimeState();
+
+                patchRuntimeState({
+                    latestLetter: letter,
+                    history: [letter, ...nextState.history.filter(item => item.id !== letter.id)].slice(0, 10),
+                    lastError: null,
+                });
+
+                toastr.success(`已为 ${resolveCharacterName(letter)} 生成调试来信`, '故人来信调试');
+                setTimeout(() => openLetterPopup(letter), 200);
+                return letter;
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                patchRuntimeState({ lastError: `调试生成失败：${message}` });
+                toastr.error(message, '故人来信调试失败');
+                throw error;
+            } finally {
+                generationPromise = null;
+                renderState();
+            }
+        })();
+
+        renderState();
+        return generationPromise;
+    }
+
+    function exposeDebugCommands() {
+        const api = {
+            help() {
+                console.info(`[${MODULE_NAME}] Debug commands:
+__DML_DEBUG__.generateForCharacter('角色名')
+__DML_DEBUG__.showApiFailureCard({ title, message, detail, hint })
+__DML_DEBUG__.state()`);
+            },
+            generateForCharacter(query) {
+                return debugGenerateForCharacter(query);
+            },
+            showApiFailureCard(options = {}) {
+                openApiFailureCard(options);
+            },
+            state() {
+                return {
+                    settings: getSettings(),
+                    runtime: loadRuntimeState(),
+                    busy: Boolean(generationPromise),
+                };
+            },
+        };
+
+        window.__DML_DEBUG__ = api;
     }
 
     const context = getContext();
