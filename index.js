@@ -634,6 +634,73 @@
         }
     }
 
+    function buildApiHeaders(settings) {
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+
+        if (settings.apiKey) {
+            headers[settings.apiKeyHeader] = `${settings.apiKeyPrefix || ''}${settings.apiKey}`;
+        }
+
+        return headers;
+    }
+
+    function getModelsUrl(apiUrl) {
+        const trimmed = String(apiUrl || '').trim();
+        if (!trimmed) {
+            return '';
+        }
+
+        if (/\/chat\/completions\/?$/i.test(trimmed)) {
+            return trimmed.replace(/\/chat\/completions\/?$/i, '/models');
+        }
+
+        if (/\/v1\/?$/i.test(trimmed)) {
+            return trimmed.replace(/\/v1\/?$/i, '/v1/models');
+        }
+
+        return trimmed.replace(/\/$/, '') + '/models';
+    }
+
+    async function fetchAvailableModels(settings) {
+        if (!settings.apiUrl) {
+            throw new Error('请先填写外部 AI URL');
+        }
+
+        const modelsUrl = getModelsUrl(settings.apiUrl);
+        const response = await fetch(modelsUrl, {
+            method: 'GET',
+            headers: buildApiHeaders(settings),
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(`HTTP ${response.status}: ${message.slice(0, 300)}`);
+        }
+
+        const data = await response.json();
+        const models = Array.isArray(data?.data)
+            ? data.data.map(item => String(item?.id || '').trim()).filter(Boolean)
+            : [];
+
+        if (!models.length) {
+            throw new Error('没有从接口返回可用模型');
+        }
+
+        return models;
+    }
+
+    function populateModelSuggestions(models) {
+        const options = Array.from(new Set(models.filter(Boolean)));
+        const dataList = $('#dml-model-suggestions');
+        dataList.empty();
+
+        for (const model of options) {
+            dataList.append(`<option value="${escapeHtml(model)}"></option>`);
+        }
+    }
+
     function buildLetterRecord(candidate, fragments, content, source) {
         const newestArchive = fragments.slice().sort((left, right) => right.lastMes - left.lastMes)[0];
 
@@ -782,9 +849,21 @@
         });
 
         $('#dml-generate-now').on('click', async () => {
-            const result = await generateLetter({ force: true, source: 'manual' });
+            const result = await generateLetter({ force: false, source: 'manual' });
             if (result.started) {
                 toastr.info('正在后台生成新的回忆信');
+                return;
+            }
+
+            if (result.reason === 'cooldown') {
+                toastr.info('24 小时内已经生成过来信了。如需覆盖，请点“重新生成”。');
+            }
+        });
+
+        $('#dml-regenerate-now').on('click', async () => {
+            const result = await generateLetter({ force: true, source: 'manual-regenerate' });
+            if (result.started) {
+                toastr.info('正在重新生成新的回忆信');
             }
         });
 
@@ -794,6 +873,31 @@
             hydrateForm(settings);
             renderState();
             toastr.success('已清空本地保存的 API Key');
+        });
+
+        $('#dml-fetch-models').on('click', async () => {
+            const button = $('#dml-fetch-models');
+            const previousText = button.text();
+            button.prop('disabled', true).text('获取中...');
+
+            try {
+                const draftSettings = {
+                    ...getSettings(),
+                    ...collectSettingsForm(),
+                };
+                const models = await fetchAvailableModels(draftSettings);
+                populateModelSuggestions(models);
+
+                if (!String($('#dml-model').val() || '').trim()) {
+                    $('#dml-model').val(models[0]);
+                }
+
+                toastr.success(`已获取 ${models.length} 个模型`);
+            } catch (error) {
+                toastr.error(error instanceof Error ? error.message : String(error), '获取模型失败');
+            } finally {
+                button.prop('disabled', false).text(previousText);
+            }
         });
 
         $('#dml-view-letter').on('click', () => {
@@ -826,6 +930,7 @@
         $('#dml-api-url').val(settings.apiUrl || '');
         $('#dml-api-key').val(settings.apiKey || '');
         $('#dml-model').val(settings.model || '');
+        populateModelSuggestions(settings.model ? [settings.model] : []);
         $('#dml-inactive-days').val(settings.inactiveDays ?? DEFAULT_SETTINGS.inactiveDays);
         $('#dml-snippets-per-letter').val(settings.snippetsPerLetter ?? DEFAULT_SETTINGS.snippetsPerLetter);
         $('#dml-cooldown-days').val(settings.cooldownDays ?? DEFAULT_SETTINGS.cooldownDays);
@@ -877,7 +982,6 @@
         const settings = latestPayload.settings;
         const statusText = $('#dml-status-text');
         const statusMeta = $('#dml-status-meta');
-        const preview = $('#dml-latest-preview');
 
         if (!statusText.length) {
             return;
@@ -897,18 +1001,6 @@
             statusText.text('每日回忆信当前已关闭');
             statusMeta.text('打开功能并保存后，扩展会在启动时后台静默检查。');
         }
-
-        if (!state.latestLetter) {
-            preview.html('<div class="dml-empty">还没有今日来信。你也可以先手动生成一封测试，或者先配置外部 AI URL。</div>');
-            return;
-        }
-
-        const name = escapeHtml(resolveCharacterName(state.latestLetter));
-        preview.html(`
-            <div class="dml-preview-title">${escapeHtml(state.latestLetter.title || '今日来信')}</div>
-            <div class="dml-preview-meta">${name} · ${escapeHtml(formatLastActivityMeta(state.latestLetter))}</div>
-            <div class="dml-preview-teaser">${escapeHtml(state.latestLetter.teaser || state.latestLetter.summary || '')}</div>
-        `);
     }
 
     function scheduleAutoRun() {

@@ -5,6 +5,21 @@
     padding-top: 8px;
 }
 
+#dml-settings .inline-drawer-content {
+    overflow: visible;
+}
+
+#dml-settings .menu_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-height: 38px;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    text-align: center;
+}
+
 #dml-settings .dml-status-card {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -50,37 +65,60 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-#dml-settings .dml-latest-preview {
-    position: relative;
-    overflow: hidden;
-    padding: 14px 16px;
-    color: #402c1f;
-    -webkit-text-fill-color: currentColor;
+#dml-settings .dml-toolbar,
+#dml-settings .dml-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#dml-settings .dml-toolbar-button {
+    min-width: 0;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+}
+
+#dml-settings .dml-fold {
     border-radius: 16px;
-    border: 1px solid rgba(126, 90, 58, 0.18);
-    background:
-        linear-gradient(180deg, rgba(255,255,255,0.48), transparent 22%),
-        repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(117, 86, 58, 0.08) 22px, rgba(117, 86, 58, 0.08) 23px),
-        linear-gradient(180deg, #f2e6d3, #ead9be);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
+    border: 1px solid rgba(255, 225, 194, 0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.08));
+    overflow: hidden;
 }
 
-#dml-settings .dml-preview-title {
-    font-size: 16px;
+#dml-settings .dml-fold-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    font-size: 14px;
     font-weight: 700;
-    color: #3f2b1d;
+    color: #fff3e1;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-#dml-settings .dml-preview-meta {
-    margin-top: 6px;
-    font-size: 12px;
-    color: rgba(64, 44, 31, 0.74);
+#dml-settings .dml-fold-summary::-webkit-details-marker {
+    display: none;
 }
 
-#dml-settings .dml-preview-teaser {
-    margin-top: 10px;
-    line-height: 1.7;
-    color: #4a3527;
+#dml-settings .dml-fold-summary::after {
+    content: "\f107";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: rgba(255, 239, 221, 0.82);
+    transition: transform 0.2s ease;
+}
+
+#dml-settings .dml-fold[open] .dml-fold-summary::after {
+    transform: rotate(180deg);
+}
+
+#dml-settings .dml-fold-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 16px 16px;
 }
 
 #dml-settings .dml-grid {
@@ -89,10 +127,15 @@
     gap: 10px;
 }
 
-#dml-settings .dml-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+#dml-settings .dml-model-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+}
+
+#dml-settings .dml-model-field {
+    min-width: 0;
 }
 
 #dml-settings .dml-help-text {
@@ -105,6 +148,19 @@
     font-size: 13px;
     line-height: 1.7;
     color: rgba(74, 53, 39, 0.74);
+}
+
+@media (max-width: 680px) {
+    #dml-settings .dml-status-card,
+    #dml-settings .dml-model-row,
+    #dml-settings .dml-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #dml-settings .dml-primary-button,
+    #dml-settings .dml-toolbar-button {
+        width: 100%;
+    }
 }
 
 .dml-letter-popup {

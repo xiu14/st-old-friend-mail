@@ -15,73 +15,83 @@
                 <button id="dml-view-letter" class="menu_button dml-primary-button" type="button">查看来信</button>
             </div>
 
-            <div id="dml-latest-preview" class="dml-latest-preview">
-                <div class="dml-empty">还没有今日来信。你也可以先手动生成一封测试。</div>
+            <div class="dml-toolbar">
+                <button id="dml-generate-now" class="menu_button dml-toolbar-button" type="button">立即生成</button>
+                <button id="dml-regenerate-now" class="menu_button dml-toolbar-button" type="button">重新生成</button>
             </div>
 
-            <hr class="sysHR" />
+            <details class="dml-fold" open>
+                <summary class="dml-fold-summary">API 信息</summary>
+                <div class="dml-fold-body">
+                    <div class="settings_section">
+                        <label for="dml-api-url">外部 AI URL</label>
+                        <input id="dml-api-url" class="text_pole" type="text" placeholder="OpenAI 兼容的 /chat/completions 地址，留空则使用本地回忆草稿" />
+                    </div>
 
-            <div class="settings_section">
-                <label class="checkbox_label" for="dml-enabled">
-                    <input id="dml-enabled" type="checkbox" />
-                    启用每日回忆信
-                </label>
-            </div>
+                    <div class="settings_section">
+                        <label for="dml-api-key">API Key</label>
+                        <input id="dml-api-key" class="text_pole" type="password" placeholder="会保存在扩展设置里；如果你的 URL 已经处理鉴权，可以留空" />
+                        <div id="dml-api-key-status" class="dml-help-text">当前没有保存 API Key。</div>
+                    </div>
 
-            <div class="settings_section">
-                <label class="checkbox_label" for="dml-auto-run">
-                    <input id="dml-auto-run" type="checkbox" />
-                    启动后静默检查，24 小时内只执行一次
-                </label>
-            </div>
+                    <div class="settings_section dml-model-row">
+                        <div class="dml-model-field">
+                            <label for="dml-model">模型名</label>
+                            <input id="dml-model" class="text_pole" type="text" placeholder="gpt-4.1-mini" list="dml-model-suggestions" />
+                            <datalist id="dml-model-suggestions"></datalist>
+                        </div>
+                        <button id="dml-fetch-models" class="menu_button dml-toolbar-button" type="button">获取模型</button>
+                    </div>
 
-            <div class="settings_section">
-                <label for="dml-api-url">外部 AI URL</label>
-                <input id="dml-api-url" class="text_pole" type="text" placeholder="OpenAI 兼容的 /chat/completions 地址，留空则使用本地回忆草稿" />
-            </div>
-
-            <div class="settings_section dml-grid">
-                <div>
-                    <label for="dml-model">模型名</label>
-                    <input id="dml-model" class="text_pole" type="text" placeholder="gpt-4.1-mini" />
+                    <div class="settings_section dml-actions">
+                        <button id="dml-clear-api-key" class="menu_button dml-toolbar-button" type="button">清空 Key</button>
+                    </div>
                 </div>
-                <div>
-                    <label for="dml-inactive-days">不活跃天数</label>
-                    <input id="dml-inactive-days" class="text_pole" type="number" min="1" step="1" />
+            </details>
+
+            <details class="dml-fold" open>
+                <summary class="dml-fold-summary">系统设置</summary>
+                <div class="dml-fold-body">
+                    <div class="settings_section">
+                        <label class="checkbox_label" for="dml-enabled">
+                            <input id="dml-enabled" type="checkbox" />
+                            启用每日回忆信
+                        </label>
+                    </div>
+
+                    <div class="settings_section">
+                        <label class="checkbox_label" for="dml-auto-run">
+                            <input id="dml-auto-run" type="checkbox" />
+                            启动后静默检查，24 小时内只执行一次
+                        </label>
+                    </div>
+
+                    <div class="settings_section dml-grid">
+                        <div>
+                            <label for="dml-inactive-days">不活跃天数</label>
+                            <input id="dml-inactive-days" class="text_pole" type="number" min="1" step="1" />
+                        </div>
+                        <div>
+                            <label for="dml-snippets-per-letter">每封信片段数</label>
+                            <input id="dml-snippets-per-letter" class="text_pole" type="number" min="1" max="5" step="1" />
+                        </div>
+                    </div>
+
+                    <div class="settings_section">
+                        <label for="dml-cooldown-days">同角色冷却天数</label>
+                        <input id="dml-cooldown-days" class="text_pole" type="number" min="1" max="90" step="1" />
+                    </div>
+
+                    <div class="settings_section">
+                        <label for="dml-system-prompt">系统提示词</label>
+                        <textarea id="dml-system-prompt" class="text_pole textarea_compact" rows="6"></textarea>
+                    </div>
+
+                    <div class="settings_section dml-actions">
+                        <button id="dml-save-settings" class="menu_button dml-toolbar-button" type="button">保存设置</button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="settings_section dml-grid">
-                <div>
-                    <label for="dml-snippets-per-letter">每封信片段数</label>
-                    <input id="dml-snippets-per-letter" class="text_pole" type="number" min="1" max="5" step="1" />
-                </div>
-                <div>
-                    <label for="dml-cooldown-days">同角色冷却天数</label>
-                    <input id="dml-cooldown-days" class="text_pole" type="number" min="1" max="90" step="1" />
-                </div>
-            </div>
-
-            <div class="settings_section">
-                <label for="dml-api-key">API Key</label>
-                <input id="dml-api-key" class="text_pole" type="password" placeholder="会保存在扩展设置里；如果你的 URL 已经处理鉴权，可以留空" />
-                <div id="dml-api-key-status" class="dml-help-text">当前没有保存 API Key。</div>
-            </div>
-
-            <div class="settings_section">
-                <label for="dml-system-prompt">系统提示词</label>
-                <textarea id="dml-system-prompt" class="text_pole textarea_compact" rows="6"></textarea>
-            </div>
-
-            <div class="settings_section dml-actions">
-                <button id="dml-save-settings" class="menu_button" type="button">保存设置</button>
-                <button id="dml-generate-now" class="menu_button" type="button">立即生成</button>
-                <button id="dml-clear-api-key" class="menu_button" type="button">清空本地 Key</button>
-            </div>
-
-            <div class="dml-help-text">
-                纯前端版会直接调用酒馆已有的聊天接口，在后台扫描不活跃角色卡的历史聊天存档，并尽量从不同存档里抽取多个片段，再组合成一封“想让你回去继续聊”的回忆信。
-            </div>
+            </details>
         </div>
     </div>
 </div>
