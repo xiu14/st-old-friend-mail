@@ -40,8 +40,8 @@
             '必须保持角色的语气、价值观、关系感和世界观，不要跳出角色。',
             '必须引用聊天片段里真实发生过的细节，不要凭空编造重大事件。',
             '输出 JSON，字段必须包含：title、teaser、summary、letter、why_now、next_hook、recall_points。',
-            '其中 letter、why_now、next_hook 应当全部使用角色第一人称口吻。',
-            'summary 可以是简短来信摘要，也应尽量保留角色口吻。',
+            '其中 teaser、summary、letter、why_now、next_hook 应当全部使用角色第一人称口吻。',
+            'teaser 和 summary 不能写成“这张角色卡值得聊”的旁白分析句，必须像角色正在对用户说话。',
             'recall_points 必须是字符串数组，2 到 4 条。',
         ].join('\n'),
     });
@@ -609,8 +609,8 @@
                 '1. 必须严格贴合角色设定、角色语气和世界观，不要跳出角色解释。',
                 '2. 必须基于片段中的具体细节，不要空泛。',
                 '3. title 像角色写给用户的一封私人来信标题，不要过长。',
-                '4. teaser 控制在 1 到 2 句，像信封外角色留下的一句轻声提醒。',
-                '5. summary 是一段简短的来信摘要，也尽量保持角色口吻。',
+                '4. teaser 控制在 1 到 2 句，像信封外角色留下的一句轻声提醒，必须使用第一人称。',
+                '5. summary 是一段简短的来信摘要，也必须保持第一人称角色口吻，不能写成“这张角色卡为什么值得回去”的旁白分析。',
                 '6. letter 是主体，可用 Markdown 分段，但必须全程第一人称。',
                 '7. why_now 要写成“为什么我现在想对你说这些”。',
                 '8. next_hook 要写成“如果你愿意，可以这样回我”。',
@@ -1411,12 +1411,21 @@
         return DOMPurify.sanitize(converter.makeHtml(markdown));
     }
 
+    function getCoverCopy(letter) {
+        if (isInCharacterMode(letter)) {
+            return String(letter.teaser || letter.summary || '我还有些话没来得及对你说完，所以先把这句留在信封外。').trim();
+        }
+
+        return String(letter.summary || letter.teaser || '这张角色卡还有一些没说完的话，正等着你把故事接起来。').trim();
+    }
+
     function openLetterPopup(letter) {
         const context = getContext();
         const popupId = `dml-popup-${Date.now()}`;
         const title = escapeHtml(letter.title || '今日故人来信');
         const teaser = escapeHtml(letter.teaser || '');
         const summary = escapeHtml(letter.summary || '');
+        const coverCopy = escapeHtml(getCoverCopy(letter));
         const name = escapeHtml(resolveCharacterName(letter));
         const avatar = letter?.character?.avatar ? context.getThumbnailUrl('avatar', letter.character.avatar) : '';
         const bodyHtml = renderLetterBody(letter);
@@ -1445,7 +1454,7 @@
                                 <div class="dml-cover-copy">
                                     <div class="dml-envelope-title">${title}</div>
                                     <div class="dml-envelope-subtitle">A LETTER FROM THE PAST</div>
-                                    <div class="dml-cover-summary">${summary || teaser || '这张角色卡还有一些没说完的话，正等着你把故事接起来。'}</div>
+                                    <div class="dml-cover-summary">${coverCopy}</div>
                                     <button class="menu_button dml-open-button" data-dml-action="open-envelope" data-dml-popup-id="${popupId}" type="button">打开信封</button>
                                 </div>
                             </div>
