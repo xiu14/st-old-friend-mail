@@ -953,15 +953,26 @@
     async function selectCandidateWithFragments(settings, runtimeState, options = {}) {
         const candidates = await collectCandidates(settings, runtimeState, options);
         const minDesiredFragments = Math.min(2, settings.snippetsPerLetter);
+        let bestPartialSelection = null;
 
         for (const candidate of candidates) {
             const fragments = await collectCandidateFragments(candidate, settings);
             if (fragments.length >= minDesiredFragments || (fragments.length > 0 && candidate.archiveCount === 1)) {
                 return { candidate, fragments };
             }
+
+            if (fragments.length > 0) {
+                const fragmentScore = fragments.reduce((sum, fragment) => sum + Number(fragment.score || 0), 0);
+                const currentBestScore = bestPartialSelection?.fragments?.reduce((sum, fragment) => sum + Number(fragment.score || 0), 0) || 0;
+                if (!bestPartialSelection
+                    || fragments.length > bestPartialSelection.fragments.length
+                    || (fragments.length === bestPartialSelection.fragments.length && fragmentScore > currentBestScore)) {
+                    bestPartialSelection = { candidate, fragments };
+                }
+            }
         }
 
-        return null;
+        return bestPartialSelection;
     }
 
     function buildCandidateFromLetter(letter) {
@@ -1702,7 +1713,7 @@
                 });
                 if (!selection) {
                     patchRuntimeState({
-                        lastError: 'No suitable inactive character archives found',
+                        lastError: '暂时没有找到适合寄来信的旧聊天片段。可以试着把每封片段数调低，或放宽抽取条件。',
                     });
                     return;
                 }
