@@ -1843,6 +1843,32 @@
         return preferred || fallback || '';
     }
 
+    async function resolvePopupAssetSource(source, timeoutMs = 1200) {
+        const asset = String(source || '').trim();
+        if (!asset) {
+            return '';
+        }
+
+        try {
+            return await preloadImageSource(asset, timeoutMs);
+        } catch {
+            return asset;
+        }
+    }
+
+    function getStampAgeClass(letter) {
+        const days = Number(letter?.inactivityDays || 0);
+        if (days >= 120) {
+            return 'is-antique';
+        }
+
+        if (days >= 45) {
+            return 'is-aged';
+        }
+
+        return 'is-fresh';
+    }
+
     function openApiFailureCard({ title = '小信封投递失败', message = '这次故人来信没有成功寄出。', detail = '', hint = '' } = {}) {
         const context = getContext();
         const popupId = `dml-failure-${Date.now()}`;
@@ -1888,6 +1914,8 @@
         const dateBoxes = dateCode.split('').map(digit => `<span class="dml-postcode-digit">${digit}</span>`).join('');
         const avatarSources = getAvatarImageSources(context, letter?.character?.avatar);
         const popupAvatarSrc = escapeHtml(await resolvePopupAvatarSource(avatarSources));
+        const popupStampSrc = escapeHtml(await resolvePopupAssetSource(STAMP_IMAGE_PATH));
+        const stampAgeClass = getStampAgeClass(letter);
         const bodyHtml = renderLetterBody(letter);
         const fragments = Array.isArray(letter.fragments) ? letter.fragments : [];
 
@@ -1911,8 +1939,8 @@
                                 </div>
                                 <div class="dml-envelope-stamp-block">
                                     <div class="dml-envelope-stamp-slot">STAMP AREA</div>
-                                    <div class="dml-envelope-stamp">
-                                        <img class="dml-envelope-stamp-image" src="${STAMP_IMAGE_PATH}" alt="SillyTavern stamp">
+                                    <div class="dml-envelope-stamp ${stampAgeClass}">
+                                        <img class="dml-envelope-stamp-image" src="${popupStampSrc || STAMP_IMAGE_PATH}" alt="SillyTavern stamp">
                                     </div>
                                     <div class="dml-envelope-cancel-mark" aria-hidden="true">
                                         <span class="dml-envelope-cancel-ring"></span>

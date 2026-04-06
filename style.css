@@ -478,6 +478,7 @@
     background: transparent;
     box-shadow: none;
     z-index: 2;
+    isolation: isolate;
 }
 
 .dml-envelope-stamp-image {
@@ -488,6 +489,42 @@
     object-fit: contain;
     background: transparent;
     transform: rotate(-2deg);
+}
+
+.dml-envelope-stamp::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.dml-envelope-stamp.is-aged .dml-envelope-stamp-image {
+    filter: sepia(0.24) saturate(0.86) brightness(0.97) contrast(0.96);
+}
+
+.dml-envelope-stamp.is-aged::after {
+    opacity: 0.22;
+    background:
+        radial-gradient(circle at 18% 20%, rgba(156, 119, 78, 0.28), transparent 18%),
+        radial-gradient(circle at 82% 78%, rgba(112, 82, 52, 0.22), transparent 18%),
+        linear-gradient(180deg, rgba(146, 110, 70, 0.12), rgba(86, 60, 34, 0.06));
+    mix-blend-mode: multiply;
+}
+
+.dml-envelope-stamp.is-antique .dml-envelope-stamp-image {
+    filter: sepia(0.46) saturate(0.72) brightness(0.95) contrast(0.93);
+}
+
+.dml-envelope-stamp.is-antique::after {
+    opacity: 0.34;
+    background:
+        radial-gradient(circle at 14% 16%, rgba(165, 125, 80, 0.34), transparent 20%),
+        radial-gradient(circle at 84% 82%, rgba(118, 83, 47, 0.3), transparent 18%),
+        radial-gradient(circle at 58% 46%, rgba(97, 69, 41, 0.1), transparent 32%),
+        linear-gradient(180deg, rgba(156, 119, 78, 0.16), rgba(92, 64, 35, 0.12));
+    mix-blend-mode: multiply;
 }
 
 .dml-envelope-cancel-mark {
