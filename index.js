@@ -2280,7 +2280,7 @@
         const characterName = resolveCharacterName(letter);
         const coverCopy = escapeHtml(getCoverCopy(letter));
         const name = escapeHtml(characterName);
-        const coverSignature = escapeHtml(`此致，${characterName}`);
+        const coverSignature = escapeHtml(characterName);
         const paperSignatureName = escapeHtml(`此致，${characterName}`);
         const paperSignatureDate = escapeHtml(formatDate(letter?.createdAt || nowIso()));
         const dateCode = formatEnvelopeDateCode(resolveEnvelopeDateValue(letter));
