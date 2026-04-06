@@ -1061,10 +1061,35 @@
         return sections.join('\n\n');
     }
 
+    function inferUserNamesFromFragments(candidate, fragments) {
+        const characterName = String(candidate?.character?.name || '').trim().toLowerCase();
+        const ignoredNames = new Set(['', 'unknown', 'system', 'assistant', 'narrator', '旁白']);
+        const names = new Set();
+
+        for (const fragment of Array.isArray(fragments) ? fragments : []) {
+            for (const message of Array.isArray(fragment?.messages) ? fragment.messages : []) {
+                const rawName = String(message?.name || '').trim();
+                const normalizedName = rawName.toLowerCase();
+                if (!rawName || ignoredNames.has(normalizedName)) {
+                    continue;
+                }
+
+                if (characterName && normalizedName === characterName) {
+                    continue;
+                }
+
+                names.add(rawName);
+            }
+        }
+
+        return Array.from(names).slice(0, 3);
+    }
+
     function buildPrompt(candidate, fragments, settings) {
         const inactivityDays = Math.max(1, Math.round(candidate.inactiveMs / ONE_DAY_MS));
         const inCharacterMode = isInCharacterMode(settings);
         const cardContext = getCharacterCardContext(candidate);
+        const detectedUserNames = inferUserNamesFromFragments(candidate, fragments);
         const fragmentText = fragments.map((fragment, index) => {
             const block = fragment.messages
                 .map(message => `[${message.name}] ${message.mes}`)
@@ -1084,6 +1109,14 @@
             `总聊天存档数: ${candidate.archiveCount}`,
             '',
         ];
+
+        if (detectedUserNames.length === 0) {
+            base.push('这些聊天片段里没有出现明确的用户名字。写信时不要擅自称呼用户的名字，整封信只使用“你”来称呼对方。', '');
+        } else if (detectedUserNames.length === 1) {
+            base.push(`这些聊天片段里，用户被明确称作：${detectedUserNames[0]}。只有在片段能够直接支撑时，才可以自然地沿用这个称呼；如果不确定，优先使用“你”。`, '');
+        } else {
+            base.push(`这些聊天片段里，用户曾被称作：${detectedUserNames.join('、')}。只有在片段能够直接支撑时，才可以偶尔沿用这些历史称呼；如果不确定，统一使用“你”。`, '');
+        }
 
         if (cardContext) {
             base.push('角色卡设定：', cardContext, '');
