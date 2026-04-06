@@ -856,16 +856,27 @@
     padding: 0 12px;
     font-size: 12px;
     letter-spacing: 0.06em;
-    color: #6b4427;
-    background: linear-gradient(180deg, rgba(255, 248, 238, 0.72), rgba(234, 214, 183, 0.84));
-    border: 1px solid rgba(133, 95, 58, 0.22);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.42);
+    color: #5d3920;
+    -webkit-text-fill-color: currentColor;
+    background: linear-gradient(180deg, rgba(255, 248, 238, 0.96), rgba(227, 200, 160, 0.96));
+    border: 1px solid rgba(124, 84, 46, 0.3);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.48),
+        0 4px 10px rgba(75, 50, 28, 0.08);
+    text-shadow: none;
 }
 
 .dml-paper-favorite-button.is-active {
     color: #fff4e7;
+    -webkit-text-fill-color: currentColor;
     background: linear-gradient(180deg, #9a6d40, #7c5532);
     border-color: rgba(106, 68, 38, 0.36);
+}
+
+.dml-paper-favorite-button:hover {
+    color: #4f2e17;
+    -webkit-text-fill-color: currentColor;
+    background: linear-gradient(180deg, rgba(255, 249, 240, 0.98), rgba(233, 208, 172, 0.98));
 }
 
 .dml-paper-header-meta {
