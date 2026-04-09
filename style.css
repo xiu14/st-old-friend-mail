@@ -399,6 +399,23 @@
     }
 }
 
+@keyframes dml-letter-popup-arrive-mobile {
+    0% {
+        opacity: 0;
+        transform: translateY(72px) scale(0.9);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(-6px) scale(1.015);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 .dml-debug-popup {
     position: relative;
     max-width: 460px;
@@ -1395,6 +1412,12 @@
         margin-top: 12px;
     }
 
+    .dml-letter-popup:not(.opened) {
+        animation: dml-letter-popup-arrive-mobile 0.72s cubic-bezier(0.2, 0.82, 0.18, 1) both;
+        transform-origin: center 70%;
+        will-change: transform, opacity;
+    }
+
     .dml-failure-card {
         padding: 18px 16px 16px;
         border-radius: 18px;
@@ -1441,7 +1464,7 @@
     }
 
     .dml-letter-popup:not(.opened) .dml-envelope-shell {
-        animation: dml-envelope-arrive-mobile 0.72s cubic-bezier(0.22, 0.8, 0.18, 1) both;
+        animation: dml-envelope-arrive-mobile 0.78s cubic-bezier(0.22, 0.84, 0.18, 1) both;
     }
 
     .dml-cover-layout {
